@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azeer Ticketing</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎫</text></svg>">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Azeer Ticketing<span>internal</span></div>
+  <div class="spacer"></div>
+  <div class="whoami hidden" id="whoami">
+    <div class="avatar" id="avatar"></div>
+    <span class="name" id="whoamiName"></span>
+    <button class="btn ghost" id="adminLink" type="button" style="display:none">Admin</button>
+    <button class="btn ghost" id="signOut" type="button">Sign out</button>
+  </div>
+</header>
+
+<!-- ------------------------------------------------------- signed out -->
+<main id="screenSignin" class="centered hidden">
+  <div class="card">
+    <h2>Sign in to raise tickets</h2>
+    <p class="sub">
+      You sign in with your own Zoho account. Tickets and CRM notes are then created
+      under your name, not a shared one.
+    </p>
+    <a class="btn primary big" href="/api/auth/zoho/start">Sign in with Zoho</a>
+  </div>
+</main>
+
+<!-- ------------------------------------------------------------- form -->
+<main id="screenForm" class="hidden">
+
+  <div class="card">
+    <h2>Customer</h2>
+    <p class="sub">Paste the Zoho CRM URL of the Azeer or company account.</p>
+
+    <div class="field">
+      <label class="lbl" for="crmUrl">CRM Account URL</label>
+      <input type="url" id="crmUrl" placeholder="https://crm.zoho.com/crm/org.../tab/Azeer/..." autocomplete="off" spellcheck="false">
+      <div class="hint">The account details are read from CRM — you never type them in.</div>
+    </div>
+
+    <div id="accountState"></div>
+  </div>
+
+  <div class="card">
+    <h2>Routing</h2>
+    <p class="sub">Where this ticket should go.</p>
+
+    <div class="field">
+      <label class="lbl" for="teamPicker">Team</label>
+      <div class="picker" id="teamPicker"></div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="classPicker">Classification</label>
+      <div class="picker" id="classPicker"></div>
+      <div class="hint" id="classHint"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>How do you want to raise this?</h2>
+    <p class="sub">Troubleshooting walks you through the checks and records them on the ticket.</p>
+
+    <div class="choices" id="modeChoices">
+      <button class="choice" type="button" data-mode="troubleshooting">
+        <span class="t">Troubleshooting / TS</span>
+        <span class="d">Follow a guided flow. Every step is recorded on the ticket.</span>
+      </button>
+      <button class="choice" type="button" data-mode="direct">
+        <span class="t">Create Ticket Directly</span>
+        <span class="d">Describe the problem and go straight to the ticket.</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="descriptionCard">
+    <h2>Problem / Request Description</h2>
+    <p class="sub">Write in Arabic, English or both. It is turned into professional English for the ticket.</p>
+    <textarea id="description" class="ar" placeholder="اكتب وصف المشكلة أو الطلب هنا..."></textarea>
+    <div class="hint" id="descriptionHint"></div>
+  </div>
+
+  <div id="formError"></div>
+
+  <div class="row end">
+    <button class="btn primary big" id="continueBtn" type="button" disabled>Continue</button>
+  </div>
+</main>
+
+<!-- --------------------------------------------------- ts case picker -->
+<main id="screenCases" class="hidden">
+  <div class="card">
+    <div class="row between" style="margin-bottom:14px">
+      <div>
+        <h2 style="margin:0">Select the troubleshooting case</h2>
+        <p class="sub" style="margin:4px 0 0">Pick the case that matches what the customer is reporting.</p>
+      </div>
+      <button class="btn ghost" id="casesBack" type="button">Back</button>
+    </div>
+    <div class="field">
+      <input type="text" id="caseSearch" placeholder="Search cases…" autocomplete="off">
+    </div>
+    <div class="choices" id="caseList"></div>
+    <div id="caseEmpty"></div>
+  </div>
+</main>
+
+<!-- -------------------------------------------------------- ts wizard -->
+<main id="screenWizard" class="hidden">
+  <div class="card">
+    <div class="ts-head">
+      <span class="case" id="wizCase"></span>
+      <span class="count" id="wizCount"></span>
+    </div>
+    <div class="progress"><i id="wizProgress" style="width:0%"></i></div>
+
+    <div id="wizStep">
+      <p class="instruction" id="wizInstruction"></p>
+      <p class="instruction-hint hidden" id="wizHint"></p>
+      <div class="answers" id="wizAnswers"></div>
+    </div>
+
+    <div id="wizFinal" class="hidden">
+      <div class="notice ok"><span class="ico">✓</span><div>
+        <strong>Troubleshooting completed</strong>
+        <div id="wizOutcome" style="margin-top:4px"></div>
+      </div></div>
+      <div class="field" id="wizDescWrap">
+        <label class="lbl" for="wizDescription">Anything to add? (optional)</label>
+        <textarea id="wizDescription" class="ar" placeholder="أضف أي تفاصيل إضافية هنا..."></textarea>
+      </div>
+      <div class="row end">
+        <button class="btn" id="wizRestart" type="button">Start over</button>
+        <button class="btn primary big" id="wizContinue" type="button">Review ticket</button>
+      </div>
+    </div>
+
+    <details class="history" id="wizHistoryWrap">
+      <summary>Troubleshooting progress</summary>
+      <ol id="wizHistory"></ol>
+    </details>
+
+    <div class="row" style="margin-top:18px">
+      <button class="btn ghost" id="wizBack" type="button">← Previous step</button>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn ghost" id="wizExit" type="button">Cancel</button>
+    </div>
+  </div>
+</main>
+
+<!-- -------------------------------------------------------- preview -->
+<main id="screenPreview" class="hidden">
+  <div class="card">
+    <div class="row between" style="margin-bottom:6px">
+      <h2 style="margin:0">Review before submitting</h2>
+      <button class="btn ghost" id="previewBack" type="button">Back</button>
+    </div>
+    <p class="sub">This is exactly what will be created in Zoho Desk.</p>
+
+    <div id="previewWarnings"></div>
+
+    <dl class="kv" id="previewMeta"></dl>
+  </div>
+
+  <div class="card">
+    <h2>Subject</h2>
+    <p class="sub">Generated automatically. You can adjust it.</p>
+    <input type="text" id="previewSubject" maxlength="150">
+  </div>
+
+  <div class="card">
+    <h2>Description (English)</h2>
+    <p class="sub">Edit if anything reads wrong. The ticket layout is applied automatically.</p>
+    <textarea id="previewDescription"></textarea>
+    <div class="row end" style="margin-top:10px">
+      <button class="btn" id="rerenderBtn" type="button">Update preview</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="previewTsCard">
+    <h2>Troubleshooting performed</h2>
+    <ol class="ts-list" id="previewTs"></ol>
+    <p class="sub" style="margin:12px 0 0" id="previewTsOutcome"></p>
+  </div>
+
+  <div class="card">
+    <h2>Ticket body</h2>
+    <p class="sub">Rendered from the <span id="previewTemplate" class="tag"></span> template.</p>
+    <pre class="body" id="previewBody"></pre>
+  </div>
+
+  <div id="submitError"></div>
+
+  <div class="row end">
+    <button class="btn primary big" id="submitBtn" type="button">Submit ticket</button>
+  </div>
+</main>
+
+<!-- -------------------------------------------------------- success -->
+<main id="screenDone" class="hidden">
+  <div class="card">
+    <div class="success-mark" id="doneMark">✓</div>
+    <h2 style="font-size:17px" id="doneTitle">Ticket created successfully</h2>
+    <div class="ticket-no" id="doneNumber"></div>
+    <p class="sub" id="doneSubject" style="margin-bottom:20px"></p>
+
+    <dl class="kv" id="doneMeta"></dl>
+
+    <div id="doneNotices" style="margin-top:18px"></div>
+
+    <div class="row" style="margin-top:22px">
+      <a class="btn primary" id="doneOpen" target="_blank" rel="noopener">Open ticket</a>
+      <button class="btn" id="doneAnother" type="button">Create another ticket</button>
+    </div>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

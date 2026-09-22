@@ -1,0 +1,21 @@
+{
+  "name": "azeer-ticket-system",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Internal ticketing and troubleshooting system for Azeer support / customer success",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/seed.js",
+    "check": "node --check src/server.js && node scripts/selftest.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.2"
+  }
+}

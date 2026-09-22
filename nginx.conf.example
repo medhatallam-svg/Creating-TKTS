@@ -1,0 +1,44 @@
+# Azeer Ticketing - nginx reverse proxy.
+# Run `certbot --nginx -d tickets.yourdomain.com` after the HTTP block is live;
+# certbot fills in the TLS directives itself.
+
+server {
+    listen 80;
+    server_name tickets.yourdomain.com;
+
+    # Everything else goes to HTTPS once a certificate exists.
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name tickets.yourdomain.com;
+
+    # ssl_certificate     /etc/letsencrypt/live/tickets.yourdomain.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/tickets.yourdomain.com/privkey.pem;
+
+    # The session cookie is marked Secure, so HTTPS is required for sign-in to work.
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    client_max_body_size 1m;
+
+    # Optional: restrict to the office network or VPN.
+    # allow 10.0.0.0/8;
+    # deny all;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Zoho and the language model can both take a few seconds.
+        proxy_read_timeout 90s;
+        proxy_send_timeout 90s;
+    }
+}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azeer Ticketing — Admin</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Azeer Ticketing<span>admin</span></div>
+  <div class="spacer"></div>
+  <div class="whoami">
+    <a class="btn ghost" href="/">Back to the tool</a>
+  </div>
+</header>
+
+<main id="gate" class="centered hidden">
+  <div class="card">
+    <h2>Admin access</h2>
+    <p class="sub">Enter the admin password to manage configuration.</p>
+    <div class="field"><input type="password" id="adminPassword" placeholder="Admin password"></div>
+    <div id="gateError"></div>
+    <button class="btn primary big" id="gateBtn" type="button">Unlock</button>
+  </div>
+</main>
+
+<main id="panel" class="wide hidden">
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview" type="button">Overview</button>
+    <button class="tab" data-tab="employees" type="button">Employees</button>
+    <button class="tab" data-tab="teams" type="button">Teams</button>
+    <button class="tab" data-tab="classifications" type="button">Classifications</button>
+    <button class="tab" data-tab="templates" type="button">Templates</button>
+    <button class="tab" data-tab="troubleshooting" type="button">Troubleshooting</button>
+    <button class="tab" data-tab="audit" type="button">Audit log</button>
+  </div>
+
+  <div id="toast"></div>
+
+  <section data-panel="overview">
+    <div class="card">
+      <h2>Health</h2>
+      <p class="sub">What is configured, and what still needs attention.</p>
+      <div id="health"></div>
+    </div>
+    <div class="card">
+      <h2>Sync from Zoho</h2>
+      <p class="sub">
+        Reads the real departments, teams, agents and the Classification picklist from Zoho Desk,
+        so mappings below are made from live values rather than guesses.
+      </p>
+      <button class="btn primary" id="syncBtn" type="button">Sync now</button>
+      <div id="syncResult" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <section data-panel="employees" class="hidden">
+    <div class="card">
+      <h2>Employees</h2>
+      <p class="sub">
+        Employees appear here automatically the first time they sign in with Zoho. Pre-creating a row
+        is optional. A row must be <em>connected</em> before that person can raise a ticket — that is
+        what makes their CRM notes genuinely theirs.
+      </p>
+      <div class="grid-2" style="margin-bottom:16px">
+        <input type="text" id="newEmployeeName" placeholder="Full name">
+        <input type="text" id="newEmployeeEmail" placeholder="name@twerlo.com">
+      </div>
+      <button class="btn" id="addEmployee" type="button">Add employee</button>
+      <div style="overflow-x:auto;margin-top:18px"><table id="employeesTable"></table></div>
+    </div>
+  </section>
+
+  <section data-panel="teams" class="hidden">
+    <div class="card">
+      <h2>Teams</h2>
+      <p class="sub">The Zoho Desk team id decides where the ticket is escalated. A team with no id cannot be used.</p>
+      <div class="grid-2" style="margin-bottom:16px">
+        <input type="text" id="newTeamName" placeholder="Team name">
+        <input type="text" id="newTeamDeskId" placeholder="Zoho Desk team id">
+      </div>
+      <button class="btn" id="addTeam" type="button">Add team</button>
+      <div style="overflow-x:auto;margin-top:18px"><table id="teamsTable"></table></div>
+    </div>
+  </section>
+
+  <section data-panel="classifications" class="hidden">
+    <div class="card">
+      <h2>Classifications</h2>
+      <p class="sub">
+        Each classification routes to a team and picks a template. <strong>Desk value</strong> is the exact
+        string stored in the Zoho Desk Classification field — leave it empty and the field is simply not set.
+        <strong>Needs review</strong> blocks the classification from being used at all.
+      </p>
+      <div class="grid-2" style="margin-bottom:16px">
+        <input type="text" id="newClassName" placeholder="Classification name">
+        <input type="text" id="newClassAr" placeholder="Arabic name (optional)">
+      </div>
+      <button class="btn" id="addClass" type="button">Add classification</button>
+      <div style="overflow-x:auto;margin-top:18px"><table id="classesTable"></table></div>
+    </div>
+  </section>
+
+  <section data-panel="templates" class="hidden">
+    <div class="card">
+      <h2>Ticket templates</h2>
+      <p class="sub">
+        The ticket body is rendered from these on the server. Available tokens:
+        <code>{azeerName} {credUser} {credPass} {businessId} {waba} {platformName} {crmUrl}
+        {descriptionEn} {shortTitle} {expectedResult} {frequency} {stepsToReproduce}
+        {troubleshooting} {evidence} {frUseCase} {frRequestedFeature} {frExpectedBenefit} {frPriority}</code>
+      </p>
+      <div id="templatesList"></div>
+    </div>
+  </section>
+
+  <section data-panel="troubleshooting" class="hidden">
+    <div class="card">
+      <h2>Troubleshooting cases</h2>
+      <p class="sub">
+        Each case is a branching flow. Every answer carries the Arabic label the employee reads, the
+        professional English sentence recorded on the ticket, and either the next step or a final outcome.
+      </p>
+      <div class="grid-2" style="margin-bottom:16px">
+        <input type="text" id="newCaseEn" placeholder="Case name (English)">
+        <input type="text" id="newCaseAr" placeholder="اسم الحالة بالعربية" dir="rtl">
+      </div>
+      <button class="btn" id="addCase" type="button">Add case</button>
+      <div id="casesList" style="margin-top:18px"></div>
+    </div>
+    <div class="card hidden" id="caseEditor"></div>
+  </section>
+
+  <section data-panel="audit" class="hidden">
+    <div class="card">
+      <h2>Ticket submissions</h2>
+      <p class="sub">Every Create Ticket attempt, whether or not it produced a ticket.</p>
+      <div style="overflow-x:auto"><table id="submissionsTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Audit log</h2>
+      <div style="overflow-x:auto"><table id="auditTable"></table></div>
+    </div>
+  </section>
+</main>
+
+<script src="/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+[Unit]
+Description=Azeer Ticketing & Troubleshooting System
+Documentation=file:/opt/azeer-tickets/app/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=azeer
+Group=azeer
+WorkingDirectory=/opt/azeer-tickets/app
+ExecStart=/usr/bin/node src/server.js
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/azeer-tickets/app/.env
+
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=azeer-tickets
+
+# Hardening. The app only needs to read its own directory and write data/.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/azeer-tickets/app/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
